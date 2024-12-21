@@ -2,6 +2,14 @@
 name = "mqtt-c"
 version = "0.1.0"
 
+[lib]
+name = "mqtt-c"
+main = "src/MQTTPhysical.lf"
+target = "C"
+platform = "Native"
+
+[lib.properties]
+
 [[app]]
 name = "MQTTLegacy"
 main = "src/MQTTLegacy.lf"

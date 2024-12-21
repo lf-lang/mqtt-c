@@ -1,0 +1,50 @@
+[package]
+name = "mqtt-c"
+version = "0.1.0"
+
+[[app]]
+name = "MQTTLegacy"
+main = "src/MQTTLegacy.lf"
+target = "C"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[[app]]
+name = "MQTTPhysical"
+main = "src/MQTTPhysical.lf"
+target = "C"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[[app]]
+name = "MQTTLogical"
+main = "src/MQTTLogical.lf"
+target = "C"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[[app]]
+name = "MQTTDistributed"
+main = "src/MQTTDistributed.lf"
+target = "C"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[[app]]
+name = "MQTTDistributedActivity"
+main = "src/MQTTDistributedActivity.lf"
+target = "C"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[dependencies]

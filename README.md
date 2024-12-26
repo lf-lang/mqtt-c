@@ -23,11 +23,14 @@ The following examples illustrate more advanced features, particularly the limit
 
 * **[MQQTDistributed](https://github.com/lf-lang/examples-lingua-franca/blob/main/C/src/MQTT/MQTTDistributed.lf)**: This is a federated LF program consisting of two unconnected federates that communicate via MQTT. The publisher has `include_timestamp` set to `true`, and the subscriber has `use_physical_time` set to `false`.  Like `MQTTLogical`, there is no other activity in this program, so the subscriber's timestamps will deterministically match those of the publisher. Unlike `MQTTLogical`, however, the microstep will be zero at the subscriber end. Also, the tags will be deterministic at the receiving end regardless of the communication latency because the receiving federate has no reason to advance its logical time unless it receives an MQTT subscription message. You can change the `use_physical_time` parameter of the `MQTTSubscriber` to `true` to get a (nondeterministic) physical connection, similar to `MQTTPhysical`. 
 
-* **[MQQTDistributedActivity](https://github.com/lf-lang/examples-lingua-franca/blob/main/C/src/MQTT/MQQTDistributedActivity)**: This is a federated LF program consisting of two unconnected federates that communicate via MQTT, but where the destination reactor has activity that interferes with its ability to use the incoming timestamps from the publisher.  This program will print a warning each time it receives a message. To get rid of the warnings, you can set the `use_physical_time` parameter of the `MQTTSubscriber` to true, and then it will not use the incoming timestamps (except to measure apparent latency).
+* **[MQQTDistributedActivity](https://github.com/lf-lang/examples-lingua-franca/blob/main/C/src/MQTT/MQQTDistributedActivity.lf)**: This is a federated LF program consisting of two unconnected federates that communicate via MQTT, but where the destination reactor has activity that interferes with its ability to use the incoming timestamps from the publisher.  This program will print a warning each time it receives a message. To get rid of the warnings, you can set the `use_physical_time` parameter of the `MQTTSubscriber` to true, and then it will not use the incoming timestamps (except to measure apparent latency).
+
+* **[MQQTDistributedEarliest](https://github.com/lf-lang/examples-lingua-franca/blob/main/C/src/MQTT/MQQTDistributedEarliest.lf)**: This is a federated LF program consisting of two unconnected federates that communicate via MQTT, but where the source does not send a timestamp and the destination has `use_physical_time` set to `false`.  The destination assigns the earliest possible tag to the incoming
+message, which, in this case, will result in a sequence of tags (0,1), (0,2), (0,3), etc.
 
 ## Prerequisites:
 
-To get this example to compile, you will need to install
+To get these examples to compile, you will need to install
 
 1. [openSSL](https://github.com/openssl/openssl.git). See [https://www.openssl.org](https://www.openssl.org).
 2. The [Eclipse Paho MQTT C client library](https://github.com/eclipse/paho.mqtt.c). E.g., the following might work:

@@ -1,0 +1,51 @@
+target C {
+  cmake-include: [
+    "../../include/paho-extension.cmake",
+    // For encode_int64()
+    "../../include/net_utils.cmake"]
+}
+
+preamble {=
+  #ifndef MQTT_BASE_H
+  #define MQTT_BASE_H
+
+  #include "platform.h" // Defines lf_critical_section_enter(), etc.
+  #include <string.h>   // Defines memcmp()
+
+  #include "MQTTClient.h"
+  #include "core/federated/network/net_util.h"
+
+  typedef enum {
+    NOT_FATAL,
+    FATAL
+  } mqtt_error_type_t;
+
+  #endif // MQTT_BASE_H
+=}
+
+/**
+ * Base class for MQTT clients (publishers and subscribers).
+ *
+ * @param address The IP address of the MQTT broker.
+ * @param topic The topic name to which to publish or subscribe to.
+ */
+reactor MQTTBase(
+  address: string = "tcp://localhost:1883",
+  topic: string = "DefaultTopic"
+) {
+  /** Client ID. This is automatically generated in each derived class. Must be globally unique. */
+  state clientID: char* = {= NULL =}
+
+  /** Check the return code from MQTT functions. Return true if return code indicates success. */
+  method check(code: int, fatal:mqtt_error_type_t, message: char*): bool {=
+    if (code != MQTTCLIENT_SUCCESS) {
+      lf_print_error("MQTTClient: %s (code %d).", message, code);
+      lf_print_error("  Cause: %s", MQTTClient_strerror(code));
+      lf_print_error("  Topic: %s", self->topic);
+      lf_print_error("  ClientID: %s", self->clientID);
+      if (fatal == FATAL) exit(1);
+      return false;
+    }
+    return true;
+  =}
+}

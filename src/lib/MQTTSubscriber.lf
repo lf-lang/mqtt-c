@@ -41,25 +41,18 @@
  * @author Ravi Akella
  * @author Edward A. Lee
  */
-target C {
-  cmake-include: [
-      "../include/paho-extension.cmake",
-      // For extract_int64()
-      "../include/net_utils.cmake"]
-}
+target C
+
+import MQTTBase from "private/MQTTBase.lf"
 
 preamble {=
   #ifndef MQTT_SUBSCRIBER_H
   #define MQTT_SUBSCRIBER_H
 
-  #include "platform.h" // Defines lf_critical_section_enter(), etc.
-  #include <string.h>   // Defines memcmp()
-
-  #include "MQTTClient.h"
-  #include "core/federated/network/net_util.h"
-
   // Fix the QoS to indicate that the message will be delivered reliably exactly once.
   #define QOS     2
+
+  #include "MQTTClient.h" // Needs to be repeated even though it's in the base class.
 
   typedef struct MQTTSubscriber_info_t {
     void* logical_action;
@@ -76,11 +69,9 @@ preamble {=
 =}
 
 reactor MQTTSubscriber(
-    address: string = "tcp://localhost:1883",
-    topic: string = "DefaultTopic",
     use_physical_time: bool = true,
     relative_timestamp: bool = false,
-    offset: time = 0) {
+    offset: time = 0) extends MQTTBase {
   preamble {=
     // Count of instances of this reactor so that unique client IDs are generated.
     static size_t _lf_MQTTSubscriber_count = 0;
@@ -219,9 +210,6 @@ reactor MQTTSubscriber(
    */
   logical action act: char*
 
-  /** Client ID. This is automatically generated. */
-  state clientID: char* = {= NULL =}
-
   /** State variable storing the MQTT client created for each instance of this reactor. */
   state client: MQTTClient = {= NULL =}
 
@@ -260,17 +248,15 @@ reactor MQTTSubscriber(
     // Last argument should be a pointer to a function to
     // handle notification of delivery of a sent message.
     // But this reactor isn't sending any messages.
-    MQTTClient_setCallbacks(self->client, &self->info, sub_connection_lost, message_arrived, NULL);
+    rc = MQTTClient_setCallbacks(self->client, &self->info, sub_connection_lost, message_arrived, NULL);
+    check(rc, FATAL, "Failed to set callbacks");
 
     // Connect to the broker.
     rc = MQTTClient_connect(self->client, &sub_connect_options);
-    if (rc != MQTTCLIENT_SUCCESS) {
-      lf_print_error_and_exit(
-          "MQTTSubscriber: Failed to connect to MQTT broker.\n"
-          "Perhaps one is not running? Return code: %d\n", rc);
-    }
+    check(rc, FATAL, "Failed to connect to broker. Is one running?");
 
-    MQTTClient_subscribe(self->client, self->topic, QOS);
+    rc = MQTTClient_subscribe(self->client, self->topic, QOS);
+    check(rc, FATAL, "Failed to subscribe");
 
     lf_critical_section_exit(self->base.environment);
   =}
@@ -293,9 +279,10 @@ reactor MQTTSubscriber(
         self->info.latencies/self->info.count
       );
     }
+    int rc = MQTTClient_disconnect(self->client, 10000);
+    check(rc, NOT_FATAL, "Failed to disconnect");
+    MQTTClient_destroy(&self->client);
     LF_PRINT_LOG("MQTTSubscriber: Client ID %s disconnecting.", self->clientID);
     if (self->clientID) free(self->clientID);
-    MQTTClient_disconnect(self->client, 10000);
-    MQTTClient_destroy(&self->client);
   =}
 }

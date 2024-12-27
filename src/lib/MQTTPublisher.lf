@@ -20,8 +20,8 @@
  * subscribes to this topic has its `use_physical_time` parameter set to false (its default is
  * `true`). Otherwise, the subscriber will issue a warning.
  *
- * @param topic The topic name to which to publish.
  * @param address The IP address of the MQTT broker.
+ * @param topic The topic name to which to publish.
  * @param include_timestamp If true, then append the current logical time to the message.
  * @param relative_timestamp If true, then the timestamp is relative to the start time of the
  * program.
@@ -31,22 +31,15 @@
  * @author Ravi Akella
  * @author Edward A. Lee
  */
-target C {
-  cmake-include: [
-      "../include/paho-extension.cmake",
-      // For encode_int64()
-      "../include/net_utils.cmake"]
-}
+target C
+
+import MQTTBase from "private/MQTTBase.lf"
 
 preamble {=
   #ifndef MQTT_PUBLISHER_H
   #define MQTT_PUBLISHER_H
 
-  #include "platform.h" // Defines lf_critical_section_enter(), etc.
-  #include <string.h>   // Defines memcpy
-
-  #include "MQTTClient.h"
-  #include "core/federated/network/net_util.h"
+  #include "MQTTClient.h" // Needs to be repeated even though it's in the base class.
 
   // Struct type used to keep track of messages in flight between reactions.
   typedef struct inflight_t {
@@ -58,11 +51,9 @@ preamble {=
 =}
 
 reactor MQTTPublisher(
-    topic: string = "DefaultTopic",
-    address: string = "tcp://localhost:1883",
     include_timestamp: bool = false,
     relative_timestamp: bool = false,
-    timeout: time = 10 sec) {
+    timeout: time = 10 sec) extends MQTTBase {
   preamble {=
     // Count of instances of this reactor so that unique client IDs are generated.
     static size_t _lf_MQTTPublisher_count = 0;
@@ -95,9 +86,6 @@ reactor MQTTPublisher(
   /** State variable that keeps track of a message in flight. */
   state inflight: inflight_t = {= {false, 0, NULL} =}
 
-  /** Client ID. This is automatically generated. */
-  state clientID: char* = {= NULL =}
-
   /** The client object. */
   state client: MQTTClient = {= NULL =}
 
@@ -115,7 +103,8 @@ reactor MQTTPublisher(
       lf_print_error_and_exit("MQTTPublisher: Failed to create client ID.");
     }
 
-    MQTTClient_create(&self->client, self->address, self->clientID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    int rc = MQTTClient_create(&self->client, self->address, self->clientID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+    check(rc, FATAL, "Failed to create client");
     pub_connect_options.keepAliveInterval = 20;
     pub_connect_options.cleansession = 1;
 
@@ -128,11 +117,8 @@ reactor MQTTPublisher(
     MQTTClient_setCallbacks(self->client, &self->inflight, pub_connection_lost, NULL, pub_delivered);
 
     // Connect to the broker.
-    int rc; // response code.
-    if ((rc = MQTTClient_connect(self->client, &pub_connect_options)) != MQTTCLIENT_SUCCESS) {
-      lf_print_error_and_exit("MQTTPublisher: Failed to connect to MQTT broker.\n"
-          "Perhaps one is not running? Return code: %d", rc);
-    }
+    rc = MQTTClient_connect(self->client, &pub_connect_options);
+    check(rc, FATAL, "Failed to connect to MQTT broker. Is one running?");
 
     lf_critical_section_exit(self->base.environment);
 
@@ -153,14 +139,8 @@ reactor MQTTPublisher(
     if(self->inflight.message_in_flight) {
       // Wait for message delivery to be complete.
       LF_PRINT_LOG("MQTTPublisher: Waiting for confirmation of publication of previous message");
-      int rc = MQTTClient_waitForCompletion(
-          self->client, self->inflight.delivery_token, self->timeout
-      );
-      if (rc != MQTTCLIENT_SUCCESS) {
-        lf_print_error("MQTTPublisher: Message delivery failed with error code %d.\n", rc);
-        lf_print_error("  Message: %s\n", in->value);
-        lf_print_error("  On topic '%s' for publisher with ClientID: %s\n", self->topic, self->clientID);
-      }
+      int rc = MQTTClient_waitForCompletion(self->client, self->inflight.delivery_token, self->timeout);
+      check(rc, NOT_FATAL, "Message delivery failed");
     }
     LF_PRINT_LOG("MQTTPublisher: Publishing message: %s", in->value);
     LF_PRINT_LOG("MQTTPublisher: on topic '%s' for publisher with ClientID: %s", self->topic, self->clientID);
@@ -210,8 +190,10 @@ reactor MQTTPublisher(
     // It will be sent only to subscribers currently subscribed.
     self->mqtt_msg.retained = 0;
 
-    MQTTClient_publishMessage(self->client, self->topic, &self->mqtt_msg, &self->inflight.delivery_token);
-    self->inflight.message_in_flight = true;
+    int rc = MQTTClient_publishMessage(self->client, self->topic, &self->mqtt_msg, &self->inflight.delivery_token);
+    if (check(rc, NOT_FATAL, "Publish failed")) {
+      self->inflight.message_in_flight = true;
+    }
 
     lf_critical_section_exit(self->base.environment);
 
@@ -222,9 +204,10 @@ reactor MQTTPublisher(
 
   /** Disconnect the client. */
   reaction(shutdown) {=
+    int rc = MQTTClient_disconnect(self->client, 10000);
+    check(rc, NOT_FATAL, "Disconnect failed");
+    MQTTClient_destroy(&self->client);
     LF_PRINT_LOG("MQTTPublisher: Client ID %s disconnecting.", self->clientID);
     if (self->clientID) free(self->clientID);
-    MQTTClient_disconnect(self->client, 10000);
-    MQTTClient_destroy(&self->client);
   =}
 }

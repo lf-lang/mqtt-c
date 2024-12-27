@@ -140,7 +140,15 @@ reactor MQTTPublisher(
       // Wait for message delivery to be complete.
       LF_PRINT_LOG("MQTTPublisher: Waiting for confirmation of publication of previous message");
       int rc = MQTTClient_waitForCompletion(self->client, self->inflight.delivery_token, self->timeout);
-      check(rc, NOT_FATAL, "Message delivery failed");
+      if (check(rc, NOT_FATAL, "Message delivery failed")) {
+        LF_PRINT_LOG("********* MQTTPublisher: Confirmed delivery of previous message");
+      } else {
+        // Delivery failed.
+        self->inflight.message_in_flight = false;
+        free(self->inflight.message);
+        self->inflight.delivery_token = 0;
+        self->inflight.message = NULL;
+      }
     }
     LF_PRINT_LOG("MQTTPublisher: Publishing message: %s", in->value);
     LF_PRINT_LOG("MQTTPublisher: on topic '%s' for publisher with ClientID: %s", self->topic, self->clientID);
@@ -193,6 +201,12 @@ reactor MQTTPublisher(
     int rc = MQTTClient_publishMessage(self->client, self->topic, &self->mqtt_msg, &self->inflight.delivery_token);
     if (check(rc, NOT_FATAL, "Publish failed")) {
       self->inflight.message_in_flight = true;
+    } else {
+      // Publish failed.
+      self->inflight.message_in_flight = false;
+      free(self->inflight.message);
+      self->inflight.delivery_token = 0;
+      self->inflight.message = NULL;
     }
 
     lf_critical_section_exit(self->base.environment);

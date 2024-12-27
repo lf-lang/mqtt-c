@@ -1,0 +1,41 @@
+/**
+ * This is a federated LF program consisting of two unconnected federates that communicate via MQTT,
+ * where the destination reactor has `use_physical_time` set to false and the source does not include a
+ * a timestamp with the message. The result is that the destination will assign a timestamp nondeterministically
+ * based on the current logical time (plus one microstep) when the message happens to arrive.
+ * The destination has no other timed activity, so the received messages will be assigned tags
+ * (0,1), (0,2), (0,3), etc.
+ *
+ * See README.md for prerequisites and further information.
+ *
+ * @author Edward A. Lee
+ */
+target C {
+  timeout: 10 secs,
+  coordination: centralized
+}
+
+import MQTTPublisher from "lib/MQTTPublisher.lf"
+import MQTTSubscriber from "lib/MQTTSubscriber.lf"
+import MessageGenerator, PrintMessage from "lib/private/MQTTTestReactors.lf"
+
+reactor Source {
+  msg = new MessageGenerator(root = "Hello World")
+  pub = new MQTTPublisher(topic="my/test", address="tcp://localhost:1883", include_timestamp=false)
+  msg.message -> pub.in
+}
+
+reactor Destination {
+  sub = new MQTTSubscriber(
+      address="tcp://localhost:1883",
+      topic="my/test",
+      use_physical_time=false,
+      offset = 0 sec)
+  dsp = new PrintMessage()
+  sub.message -> dsp.message
+}
+
+federated reactor {
+  source = new Source()
+  destination = new Destination()
+}

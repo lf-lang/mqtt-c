@@ -194,7 +194,13 @@ reactor MQTTSubscriber(
 
     /** Callback invoked if the connection is lost. */
     void sub_connection_lost(void *info, char *cause) {
-      lf_print_warning("MQTTSubscriber: Connection lost. Cause: %s", cause);
+      // NOTE: cause is always NULL. Likely cause is a duplicate ID.
+      lf_print_error_and_exit("MQTTSubscriber: Connection lost. Possibly another client with the same ID has connected.");
+    }
+
+    // Callback invoked if this client gets diconnected.
+    void sub_disconnected(void *context,  MQTTProperties *properties, enum MQTTReasonCodes reasonCode) {
+      lf_print_error_and_exit("MQTTSubscriber: Has been disconnected: %s", MQTTReasonCode_toString(reasonCode));
     }
   =}
 
@@ -250,6 +256,8 @@ reactor MQTTSubscriber(
     // But this reactor isn't sending any messages.
     rc = MQTTClient_setCallbacks(self->client, &self->info, sub_connection_lost, message_arrived, NULL);
     check(rc, FATAL, "Failed to set callbacks");
+    rc = MQTTClient_setDisconnected(self->client, NULL, sub_disconnected);
+    check(rc, FATAL, "Failed to set disconnected callback");
 
     // Connect to the broker.
     rc = MQTTClient_connect(self->client, &sub_connect_options);

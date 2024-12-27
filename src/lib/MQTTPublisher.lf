@@ -59,8 +59,6 @@ reactor MQTTPublisher(
     static size_t _lf_MQTTPublisher_count = 0;
 
     // Connection options for the client.
-    // Making this global means that all instances of this reactor have
-    // the same connection options.
     MQTTClient_connectOptions pub_connect_options = MQTTClient_connectOptions_initializer;
 
     // Callback invoked once delivery is complete.
@@ -73,7 +71,19 @@ reactor MQTTPublisher(
     }
     // Callback invoked if the connection is lost.
     void pub_connection_lost(void *context, char *cause) {
-      lf_print_error("\nMQTTPublisher: Connection lost. Cause: %s\n", cause);
+      // NOTE: cause is always NULL. Likely cause is a duplicate ID.
+      lf_print_error_and_exit("MQTTPublisher: Connection lost. Possibly another client with the same ID has connected.");
+    }
+
+    // Callback invoked when a message arrives.
+    int pub_message_arrived(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
+      // Ignore because the publisher does not subscribe to any topics.
+      return true;
+    }
+
+    // Callback invoked if this client gets diconnected.
+    void pub_disconnected(void *context,  MQTTProperties *properties, enum MQTTReasonCodes reasonCode) {
+      lf_print_error_and_exit("MQTTPublisher: Has been disconnected: %s", MQTTReasonCode_toString(reasonCode));
     }
   =}
 
@@ -105,8 +115,6 @@ reactor MQTTPublisher(
 
     int rc = MQTTClient_create(&self->client, self->address, self->clientID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
     check(rc, FATAL, "Failed to create client");
-    pub_connect_options.keepAliveInterval = 20;
-    pub_connect_options.cleansession = 1;
 
     // Set up callback functions.
     // Second to last argument should be a pointer to a function
@@ -114,9 +122,14 @@ reactor MQTTPublisher(
     // But this reactor isn't sending any messages.
     // Second argument is a pointer to context that will be passed to pub_delivered,
     // which in this case is a pointer to the inflight state variable.
-    MQTTClient_setCallbacks(self->client, &self->inflight, pub_connection_lost, NULL, pub_delivered);
+    rc = MQTTClient_setCallbacks(self->client, &self->inflight, pub_connection_lost, pub_message_arrived, pub_delivered);
+    check(rc, FATAL, "Failed to set callbacks");
+    rc = MQTTClient_setDisconnected(self->client, NULL, pub_disconnected);
+    check(rc, FATAL, "Failed to set disconnected callback");
 
     // Connect to the broker.
+    pub_connect_options.keepAliveInterval = 20;
+    pub_connect_options.cleansession = 1;
     rc = MQTTClient_connect(self->client, &pub_connect_options);
     check(rc, FATAL, "Failed to connect to MQTT broker. Is one running?");
 

@@ -104,17 +104,11 @@ reactor MQTTPublisher(
 
   /** Connect to the broker. Exit if this fails. */
   reaction(startup) {=
+    int rc; // response code.
+
     // In case there are multiple instances of this or the subscriber, enter
     // a critical section. The Paho MQTT functions are not thread safe.
     lf_critical_section_enter(self->base.environment);
-
-    // Create a unique ID.
-    if (asprintf(&self->clientID, "LF_MQTTPublisher_%zu", _lf_MQTTPublisher_count++) < 0) {
-      lf_print_error_and_exit("MQTTPublisher: Failed to create client ID.");
-    }
-
-    int rc = MQTTClient_create(&self->client, self->address, self->clientID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    check(rc, FATAL, "Failed to create client");
 
     // Set up callback functions.
     // Second to last argument should be a pointer to a function
@@ -235,6 +229,5 @@ reactor MQTTPublisher(
     check(rc, NOT_FATAL, "Disconnect failed");
     MQTTClient_destroy(&self->client);
     LF_PRINT_LOG("MQTTPublisher: Client ID %s disconnecting.", self->clientID);
-    if (self->clientID) free(self->clientID);
   =}
 }

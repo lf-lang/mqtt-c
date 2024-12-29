@@ -225,21 +225,9 @@ reactor MQTTSubscriber(
   reaction(startup) -> act {=
     int rc; // response code.
 
-    if (asprintf(&self->clientID, "LF_MQTTSubscriber_%zu", _lf_MQTTSubscriber_count++) < 0) {
-      lf_print_error_and_exit("MQTTSubscriber: Failed to create client ID.");
-    }
-
     // In case there are multiple instances of this or the subscriber, enter
     // a critical section. The Paho MQTT functions are not thread safe.
     lf_critical_section_enter(self->base.environment);
-
-    rc = MQTTClient_create(
-      &self->client, self->address, self->clientID, MQTTCLIENT_PERSISTENCE_NONE, NULL
-    );
-    if (rc != MQTTCLIENT_SUCCESS) {
-      lf_print_error_and_exit("MQTTSubscriber: Failed to create MQTT client.\n"
-          "Return code: %d\n", rc);
-    }
 
     sub_connect_options.keepAliveInterval = 20;
     sub_connect_options.cleansession = 1;
@@ -291,6 +279,5 @@ reactor MQTTSubscriber(
     check(rc, NOT_FATAL, "Failed to disconnect");
     MQTTClient_destroy(&self->client);
     LF_PRINT_LOG("MQTTSubscriber: Client ID %s disconnecting.", self->clientID);
-    if (self->clientID) free(self->clientID);
   =}
 }

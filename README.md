@@ -30,8 +30,23 @@ message, which, in this case, will result in a sequence of tags (0,1), (0,2), (0
 
 ## Prerequisites:
 
-To get these examples to compile, you will need to install
+### Ubuntu
+1. [openSSL](https://github.com/openssl/openssl.git)
+```shell
+    apt install libssl-dev
+```
 
+2. The [Eclipse Paho MQTT C client library](https://github.com/eclipse/paho.mqtt.c). Build from source with
+```shell
+    apt install libpaho-mqtt-dev
+```
+
+3. A MQTT broker, e.g. Eclipse Mosquitto
+```shell
+    apt install mosquitto
+```
+
+### MacOS
 1. [openSSL](https://github.com/openssl/openssl.git). See [https://www.openssl.org](https://www.openssl.org).
 2. The [Eclipse Paho MQTT C client library](https://github.com/eclipse/paho.mqtt.c). E.g., the following might work:
 
@@ -47,9 +62,9 @@ To get these examples to compile, you will need to install
 The last line could be put in your `~/.bash_profile` file so that you don't have to type each time you run the LF program in a new shell.
 
 To run the compiled code, you need an MQTT broker to be running. For example, the [Mosquitto Eclipse project](https://mosquitto.org/download/) provides one. On a Mac, you can use homebrew to install the Mosquitto broker:
-
+```shell
     brew install mosquitto
-
+```
 To start the broker and test it, do this:
 
 1. Start the broker in the background:
@@ -66,7 +81,7 @@ To start the broker and test it, do this:
 
 If you want to start the broker always upon login, you can do this:
 
-```
+```shell
 brew services start mosquitto
 ```
 

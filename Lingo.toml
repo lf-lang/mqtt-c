@@ -4,7 +4,7 @@ version = "0.1.0"
 
 [lib]
 name = "mqtt-c"
-main = "src/MQTTPhysical.lf"
+location = "src/lib"
 target = "C"
 platform = "Native"
 
@@ -17,7 +17,6 @@ target = "C"
 platform = "Native"
 
 [app.properties]
-fast = false
 
 [[app]]
 name = "MQTTPhysical"
@@ -26,7 +25,6 @@ target = "C"
 platform = "Native"
 
 [app.properties]
-fast = false
 
 [[app]]
 name = "MQTTLogical"
@@ -35,7 +33,6 @@ target = "C"
 platform = "Native"
 
 [app.properties]
-fast = false
 
 [[app]]
 name = "MQTTDistributed"
@@ -44,7 +41,6 @@ target = "C"
 platform = "Native"
 
 [app.properties]
-fast = false
 
 [[app]]
 name = "MQTTDistributedActivity"
@@ -53,6 +49,5 @@ target = "C"
 platform = "Native"
 
 [app.properties]
-fast = false
 
 [dependencies]

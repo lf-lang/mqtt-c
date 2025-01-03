@@ -36,7 +36,7 @@ message, which, in this case, will result in a sequence of tags (0,1), (0,2), (0
     apt install libssl-dev
 ```
 
-2. The [Eclipse Paho MQTT C client library](https://github.com/eclipse/paho.mqtt.c). Build from source with
+2. The [Eclipse Paho MQTT C client library](https://github.com/eclipse/paho.mqtt.c).
 ```shell
     apt install libpaho-mqtt-dev
 ```
@@ -65,6 +65,14 @@ To run the compiled code, you need an MQTT broker to be running. For example, th
 ```shell
     brew install mosquitto
 ```
+
+If you want to start the broker always upon login, you can do this:
+
+```shell
+brew services start mosquitto
+```
+
+### All Platforms
 To start the broker and test it, do this:
 
 1. Start the broker in the background:
@@ -79,11 +87,6 @@ To start the broker and test it, do this:
 
     > mosquitto_pub -t 'test/topic' -m 'Hello World'
 
-If you want to start the broker always upon login, you can do this:
-
-```shell
-brew services start mosquitto
-```
 
 ## Implementation
 

@@ -3,7 +3,7 @@
 This library provides two reactors, `MQTTPublisher` and `MQTTSubscriber` together with a collection
 of example programs.
 
-MQTT is a popular publish-and-subscribe framework using in IoT and other applications. Using MQTT, programs publish data on "topics" and subscribe to "topics". A broker, pointed to by a URL, disseminates published topics to all subscribers. The examples here show how a Lingua Franca program can interact with pre-existing MQTT services by either subscribing to their published data or publishing data for their use.
+MQTT is a popular publish-and-subscribe framework used in IoT and other applications. Using MQTT, programs publish data on "topics" and subscribe to "topics". A broker, pointed to by a URL, disseminates published topics to all subscribers. The examples here show how a Lingua Franca program can interact with pre-existing MQTT services by either subscribing to their published data or publishing data for their use.
 
 The more advanced examples here show that it possible to use MQTT as a communication medium between separate LF programs, but that it is difficult to get deterministic behavior. This mechanism should be used, in most cases, only if determinism is irrelevant to you.
 

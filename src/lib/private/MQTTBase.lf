@@ -1,8 +1,7 @@
 target C {
   cmake-include: [
-    "../../include/paho-extension.cmake",
-    // For encode_int64()
-    "../../include/net_utils.cmake"]
+    "../../include/paho-extension.cmake", "MQTTUtil.cmake"],
+  files: ["MQTTUtil.c", "MQTTUtil.h"]
 }
 
 preamble {=
@@ -10,10 +9,8 @@ preamble {=
   #define MQTT_BASE_H
 
   #include "platform.h" // Defines lf_critical_section_enter(), etc.
-  #include <string.h>   // Defines memcmp()
-
+  #include "MQTTUtil.h"
   #include "MQTTClient.h"
-  #include "core/federated/network/net_util.h"
 
   typedef enum {
     NOT_FATAL,

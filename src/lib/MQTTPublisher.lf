@@ -187,7 +187,7 @@ reactor MQTTPublisher(
 
       // Append the current timestamp to the message.
       instant_t timestamp = (self->relative_timestamp) ? lf_time_logical_elapsed() : lf_time_logical();
-      encode_int64(timestamp,
+      mqtt_encode_int64(timestamp,
         (unsigned char*)(self->inflight.message + length - sizeof(instant_t))
       );
       LF_PRINT_LOG("MQTTPublisher: Timestamp (elapsed) of sending message: " PRINTF_TIME,

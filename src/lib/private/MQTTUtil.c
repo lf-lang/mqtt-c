@@ -49,7 +49,7 @@ static int64_t swap_bytes_if_big_endian_int64(int64_t src) {
   return x.ull;
 }
 
-void encode_int64(int64_t data, unsigned char* buffer) {
+void mqtt_encode_int64(int64_t data, unsigned char* buffer) {
   // This strategy is fairly brute force, but it avoids potential
   // alignment problems.
   int shift = 0;
@@ -59,7 +59,7 @@ void encode_int64(int64_t data, unsigned char* buffer) {
   }
 }
 
-int64_t extract_int64(unsigned char* bytes) {
+int64_t mqtt_extract_int64(unsigned char* bytes) {
   // Use memcpy to prevent possible alignment problems on some processors.
   union {
     int64_t ull;

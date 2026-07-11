@@ -116,7 +116,7 @@ reactor MQTTSubscriber(
         // Is the magic string present?
         && memcmp("LFts", &message->payload[message->payloadlen - sizeof(instant_t) - 4], 4) == 0
       ) {
-        instant_t timestamp = extract_int64(
+        instant_t timestamp = mqtt_extract_int64(
           (unsigned char*)message->payload + message->payloadlen - sizeof(instant_t)
         );
 

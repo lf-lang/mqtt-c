@@ -87,6 +87,26 @@ To start the broker and test it, do this:
 
     > mosquitto_pub -t 'test/topic' -m 'Hello World'
 
+# To Use This Library
+
+Clone the repo into your `lf-packages` directory in the root of your project or into
+the directory pointed to by your `LF_PACKAGES` environment variable:
+
+```
+git clone https://github.com/lf-lang/mqtt-c.git
+```
+
+Alternatively, if you are in a git repo, create a submodule:
+
+```
+git submodule add https://github.com/lf-lang/mqtt-c.git
+```
+
+Then import the library reactors. For example:
+
+```
+import MQTTPublisher from <mqtt-c>
+```
 
 ## Implementation
 

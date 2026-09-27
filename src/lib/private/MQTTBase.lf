@@ -1,6 +1,5 @@
 target C {
-  cmake-include: [
-    "../../include/paho-extension.cmake", "MQTTUtil.cmake"],
+  cmake-include: ["../../include/paho-extension.cmake", "MQTTUtil.cmake"],
   files: ["MQTTUtil.c", "MQTTUtil.h"]
 }
 
@@ -26,15 +25,12 @@ preamble {=
  * @param address The IP address of the MQTT broker.
  * @param topic The topic name to which to publish or subscribe to.
  */
-reactor MQTTBase(
-  address: string = "tcp://localhost:1883",
-  topic: string = "DefaultTopic"
-) {
+reactor MQTTBase(address: string = "tcp://localhost:1883", topic: string = "DefaultTopic") {
   /** Client ID. This is automatically generated in each derived class. Must be globally unique. */
   state clientID: {= const char* =} = {= NULL =}
 
   /** Check the return code from MQTT functions. Return true if return code indicates success. */
-  method check(code: int, fatal:mqtt_error_type_t, message: char*): bool {=
+  method check(code: int, fatal: mqtt_error_type_t, message: char*): bool {=
     if (code != MQTTCLIENT_SUCCESS) {
       lf_print_error("MQTTClient: %s (code %d).", message, code);
       lf_print_error("  Cause: %s", MQTTClient_strerror(code));
